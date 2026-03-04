@@ -19,12 +19,14 @@
     cookies: 0,
     totalCookiesBaked: 0,
     totalClicks: 0,
+    handMadeCookies: 0,
     goldenClicks: 0,
     multiplier: 1,
     prestigeChips: 0,
     frenzyTimer: 0,
     clickFrenzyTimer: 0,
     clotTimer: 0,
+    cookieStormTimer: 0,
     buildingSpecialTimer: 0,
     toggleKey: 'h',
     isHidden: false,
@@ -48,7 +50,8 @@
       { name: 'Antimatter Condenser', cost: 170000000000000, baseCost: 170000000000000, cps: 430000000, owned: 0 }
     ],
     upgrades: [],
-    achievements: []
+    achievements: [],
+    highestCookies: 0
   };
 
   const achievementDefs = [
@@ -111,11 +114,13 @@
         totalCookiesBaked: Number(saved.totalCookiesBaked) || 0,
         totalClicks: Number(saved.totalClicks) || 0,
         goldenClicks: Number(saved.goldenClicks) || 0,
+        handMadeCookies: Number(saved.handMadeCookies) || 0,
         multiplier: Number(saved.multiplier) || 1,
         prestigeChips: Number(saved.prestigeChips) || 0,
         frenzyTimer: Number(saved.frenzyTimer) || 0,
         clickFrenzyTimer: Number(saved.clickFrenzyTimer) || 0,
         clotTimer: Number(saved.clotTimer) || 0,
+        cookieStormTimer: Number(saved.cookieStormTimer) || 0,
         buildingSpecialTimer: Number(saved.buildingSpecialTimer) || 0,
         toggleKey: (typeof saved.toggleKey === 'string' && saved.toggleKey) ? saved.toggleKey.toLowerCase() : 'h',
         isHidden: Boolean(saved.isHidden),
@@ -123,7 +128,8 @@
         buyAmount: [1, 10, 100].includes(saved.buyAmount) ? saved.buyAmount : 1,
         buyMode: saved.buyMode === 'sell' ? 'sell' : 'buy',
         log: Array.isArray(saved.log) ? saved.log.slice(0, 50) : [],
-        achievements: Array.isArray(saved.achievements) ? saved.achievements : []
+        achievements: Array.isArray(saved.achievements) ? saved.achievements : [],
+        highestCookies: Number(saved.highestCookies) || 0
       });
       if (Array.isArray(saved.buildings)) {
         saved.buildings.forEach((b, i) => {
@@ -166,7 +172,7 @@
     #${ROOT_ID} .cc-log { flex:1; border:1px solid #0008; background:#0005; overflow:auto; padding:8px; font-size:13px; line-height:1.35; }
     #${ROOT_ID} .cc-log-entry { padding:4px 0; border-bottom:1px solid #ffffff1f; }
     #${ROOT_ID} .cc-right { display:flex; flex-direction:column; background:#151619d4; }
-    #${ROOT_ID} .cc-tabs { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; }
+    #${ROOT_ID} .cc-tabs { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; }
     #${ROOT_ID} .cc-tab { border:1px solid #0008; background:#41311f; color:#f9e3bf; padding:10px; cursor:pointer; font-size:16px; }
     #${ROOT_ID} .cc-tab.active { background:#6d5034; }
     #${ROOT_ID} .cc-buymodes { display:flex; gap:6px; padding:8px; background:#2b2217; border-bottom:1px solid #0008; }
@@ -182,6 +188,8 @@
     #${ROOT_ID} .cc-controls button { flex:1; cursor:pointer; padding:7px; background:#3f3f3f; color:#fff; border:1px solid #111; }
     #${ROOT_ID} .cc-golden { position:fixed; font-size:52px; cursor:pointer; z-index:2147483647; filter:drop-shadow(0 0 8px gold); user-select:none; }
     #${ROOT_ID} .cc-flash { position:fixed; left:50%; top:15%; transform:translateX(-50%); color:#ffea96; font-size:36px; z-index:2147483647; text-shadow:0 2px 10px #000; pointer-events:none; }
+    #${ROOT_ID} .cc-click-float { position:fixed; z-index:2147483647; pointer-events:none; color:#ffd88a; font-weight:bold; text-shadow:0 2px 6px #000; animation: cc-rise 900ms ease-out forwards; }
+    @keyframes cc-rise { from { opacity:1; transform:translate(-50%, 0); } to { opacity:0; transform:translate(-50%, -48px); } }
     #${ROOT_ID} .cc-hotkey-note { margin-top:6px; color:#d7c7aa; font-size:12px; }
   `;
   document.head.appendChild(style);
@@ -211,6 +219,7 @@
           <button id="cc-tab-upgrades" class="cc-tab">Upgrades</button>
           <button id="cc-tab-prestige" class="cc-tab">Prestige</button>
           <button id="cc-tab-achievements" class="cc-tab">Achievements</button>
+          <button id="cc-tab-stats" class="cc-tab">Stats</button>
         </div>
         <div class="cc-mode">
           <button id="cc-mode-buy" class="cc-switch">Buy</button>
@@ -246,6 +255,7 @@
     tabUpgrades: root.querySelector('#cc-tab-upgrades'),
     tabPrestige: root.querySelector('#cc-tab-prestige'),
     tabAchievements: root.querySelector('#cc-tab-achievements'),
+    tabStats: root.querySelector('#cc-tab-stats'),
     buy1: root.querySelector('#cc-buy-1'),
     buy10: root.querySelector('#cc-buy-10'),
     buy100: root.querySelector('#cc-buy-100'),
@@ -262,6 +272,16 @@
     f.textContent = text;
     document.body.appendChild(f);
     setTimeout(() => f.remove(), 1600);
+  };
+
+  const spawnClickFloat = (x, y, value) => {
+    const f = document.createElement('div');
+    f.className = 'cc-click-float';
+    f.textContent = `+${fmt(value)}`;
+    f.style.left = `${x}px`;
+    f.style.top = `${y}px`;
+    document.body.appendChild(f);
+    setTimeout(() => f.remove(), 920);
   };
 
   const news = [
@@ -303,13 +323,15 @@
       `Prestige chips: <b>${fmt(state.prestigeChips)}</b> (+${(prestigeMult() * 100 - 100).toFixed(0)}% CpS)<br>` +
       `Ascend reward now: <b>${fmt(gain)}</b> chip(s)<br>` +
       `Need <b>${fmt(need)}</b> more total cookies for next prestige chip.<br>` +
-      `Clicks: <b>${fmt(state.totalClicks)}</b> | Golden clicks: <b>${fmt(state.goldenClicks)}</b> | Achievements: <b>${state.achievements.length}/${achievementDefs.length}</b>`
+      `Clicks: <b>${fmt(state.totalClicks)}</b> | Golden clicks: <b>${fmt(state.goldenClicks)}</b> | Achievements: <b>${state.achievements.length}/${achievementDefs.length}</b><br>` +
+      `Hand-made: <b>${fmt(state.handMadeCookies)}</b> | Highest bank: <b>${fmt(state.highestCookies)}</b>`
     );
 
     const buffs = [];
     if (state.frenzyTimer > 0) buffs.push(`Frenzy ${Math.ceil(state.frenzyTimer)}s`);
     if (state.clickFrenzyTimer > 0) buffs.push(`Click Frenzy ${Math.ceil(state.clickFrenzyTimer)}s`);
     if (state.clotTimer > 0) buffs.push(`Clot ${Math.ceil(state.clotTimer)}s`);
+    if (state.cookieStormTimer > 0) buffs.push(`Cookie Storm ${Math.ceil(state.cookieStormTimer)}s`);
     if (state.buildingSpecialTimer > 0) buffs.push(`Building Special ${Math.ceil(state.buildingSpecialTimer)}s`);
     els.buffs.textContent = buffs.join(' | ');
 
@@ -325,11 +347,12 @@
 
   function setTab(tab) {
     state.activeTab = tab;
-    [els.tabShop, els.tabUpgrades, els.tabPrestige, els.tabAchievements].forEach((t) => t.classList.remove('active'));
+    [els.tabShop, els.tabUpgrades, els.tabPrestige, els.tabAchievements, els.tabStats].forEach((t) => t.classList.remove('active'));
     if (tab === 'shop') els.tabShop.classList.add('active');
     if (tab === 'upgrades') els.tabUpgrades.classList.add('active');
     if (tab === 'prestige') els.tabPrestige.classList.add('active');
     if (tab === 'achievements') els.tabAchievements.classList.add('active');
+    if (tab === 'stats') els.tabStats.classList.add('active');
     renderList();
   }
 
@@ -450,6 +473,10 @@
       state.totalClicks = 0;
       state.goldenClicks = 0;
       state.buyAmount = 1;
+      state.buyMode = 'buy';
+      state.cookieStormTimer = 0;
+      state.handMadeCookies = 0;
+      state.highestCookies = 0;
       state.buildings.forEach((b) => { b.owned = 0; b.cost = b.baseCost; });
       state.upgrades.forEach((u) => { u.bought = false; });
       state.achievements = [];
@@ -461,6 +488,7 @@
 
     els.list.append(card, btn);
   }
+
 
   function renderAchievementsPanel() {
     els.list.innerHTML = policy.createHTML('');
@@ -476,11 +504,33 @@
     });
   }
 
+  function renderStatsPanel() {
+    const totalOwned = state.buildings.reduce((n, b) => n + b.owned, 0);
+    const topBuilding = [...state.buildings].sort((a, b) => b.owned - a.owned)[0];
+    els.list.innerHTML = policy.createHTML('');
+    const card = document.createElement('div');
+    card.className = 'cc-log-entry';
+    card.style.fontSize = '15px';
+    card.style.lineHeight = '1.5';
+    card.innerHTML = policy.createHTML(
+      `<b>Bakery stats</b><br>` +
+      `Cookies in bank: <b>${fmt(state.cookies)}</b><br>` +
+      `Total baked (lifetime): <b>${fmt(state.totalCookiesBaked)}</b><br>` +
+      `Hand-made cookies: <b>${fmt(state.handMadeCookies)}</b><br>` +
+      `Current CpS: <b>${activeCps().toLocaleString(undefined, { maximumFractionDigits: 1 })}</b><br>` +
+      `Buildings owned: <b>${fmt(totalOwned)}</b><br>` +
+      `Most-owned building: <b>${topBuilding?.name || 'None'}</b><br>` +
+      `Golden cookies clicked: <b>${fmt(state.goldenClicks)}</b>`
+    );
+    els.list.appendChild(card);
+  }
+
   function renderList() {
     if (state.activeTab === 'shop') renderShop();
     if (state.activeTab === 'upgrades') renderUpgrades();
     if (state.activeTab === 'prestige') renderPrestigePanel();
     if (state.activeTab === 'achievements') renderAchievementsPanel();
+    if (state.activeTab === 'stats') renderStatsPanel();
   }
 
   function renderAll() {
@@ -516,10 +566,14 @@
         state.clickFrenzyTimer = 13;
         addLog('Golden cookie! Click Frenzy started (x777 click power).');
         flash('Click Frenzy!');
-      } else if (r < 0.90) {
+      } else if (r < 0.82) {
         state.buildingSpecialTimer = 30;
         addLog('Golden cookie! Building Special activated (x2 production).');
         flash('Building Special!');
+      } else if (r < 0.94) {
+        state.cookieStormTimer = 10;
+        addLog('Golden cookie! Cookie Storm started.');
+        flash('Cookie Storm!');
       } else {
         const loss = Math.floor(state.cookies * 0.1);
         state.cookies = Math.max(0, state.cookies - loss);
@@ -535,12 +589,15 @@
     setTimeout(spawnGoldenCookie, 45000 + Math.random() * 120000);
   }
 
-  els.cookieBtn.onclick = () => {
+  els.cookieBtn.onclick = (e) => {
     let click = state.multiplier * prestigeMult() * clickMult() * milkMult();
     if (state.clickFrenzyTimer > 0) click *= 777;
     state.cookies += click;
     state.totalCookiesBaked += click;
+    state.handMadeCookies += click;
     state.totalClicks += 1;
+    state.highestCookies = Math.max(state.highestCookies, state.cookies);
+    spawnClickFloat(e.clientX, e.clientY, click);
     renderAll();
   };
 
@@ -548,6 +605,7 @@
   els.tabUpgrades.onclick = () => setTab('upgrades');
   els.tabPrestige.onclick = () => setTab('prestige');
   els.tabAchievements.onclick = () => setTab('achievements');
+  els.tabStats.onclick = () => setTab('stats');
 
   els.buy1.onclick = () => { state.buyAmount = 1; renderAll(); };
   els.buy10.onclick = () => { state.buyAmount = 10; renderAll(); };
@@ -603,12 +661,15 @@
       return;
     }
     const gain = activeCps() / 10;
-    state.cookies += gain;
-    state.totalCookiesBaked += gain;
+    const stormBonus = state.cookieStormTimer > 0 ? Math.max(1, baseCps() * 0.2) / 10 : 0;
+    state.cookies += gain + stormBonus;
+    state.totalCookiesBaked += gain + stormBonus;
     if (state.frenzyTimer > 0) state.frenzyTimer = Math.max(0, state.frenzyTimer - 0.1);
     if (state.clickFrenzyTimer > 0) state.clickFrenzyTimer = Math.max(0, state.clickFrenzyTimer - 0.1);
     if (state.clotTimer > 0) state.clotTimer = Math.max(0, state.clotTimer - 0.1);
+    if (state.cookieStormTimer > 0) state.cookieStormTimer = Math.max(0, state.cookieStormTimer - 0.1);
     if (state.buildingSpecialTimer > 0) state.buildingSpecialTimer = Math.max(0, state.buildingSpecialTimer - 0.1);
+    state.highestCookies = Math.max(state.highestCookies, state.cookies);
     renderAll();
   }, 100);
 
