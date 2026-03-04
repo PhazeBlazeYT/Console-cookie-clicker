@@ -1,0 +1,451 @@
+(() => {
+  const ROOT_ID = 'cc-og-fullscreen-root';
+  const STYLE_ID = 'cc-og-fullscreen-style';
+  const SAVE_KEY = 'cc_pro_console_save_v4';
+
+  const existing = document.getElementById(ROOT_ID);
+  if (existing) existing.remove();
+  const existingStyle = document.getElementById(STYLE_ID);
+  if (existingStyle) existingStyle.remove();
+
+  let policy;
+  if (window.trustedTypes) {
+    policy = window.trustedTypes.defaultPolicy || window.trustedTypes.createPolicy('cc-og-policy', { createHTML: (s) => s });
+  } else {
+    policy = { createHTML: (s) => s };
+  }
+
+  const state = {
+    cookies: 0,
+    totalCookiesBaked: 0,
+    multiplier: 1,
+    prestigeChips: 0,
+    frenzyTimer: 0,
+    clickFrenzyTimer: 0,
+    clotTimer: 0,
+    toggleKey: 'h',
+    isHidden: false,
+    activeTab: 'shop',
+    log: [],
+    buildings: [
+      { name: 'Cursor', cost: 15, baseCost: 15, cps: 0.1, owned: 0 },
+      { name: 'Grandma', cost: 100, baseCost: 100, cps: 1, owned: 0 },
+      { name: 'Farm', cost: 1100, baseCost: 1100, cps: 8, owned: 0 },
+      { name: 'Mine', cost: 12000, baseCost: 12000, cps: 47, owned: 0 },
+      { name: 'Factory', cost: 130000, baseCost: 130000, cps: 260, owned: 0 },
+      { name: 'Bank', cost: 1400000, baseCost: 1400000, cps: 1400, owned: 0 },
+      { name: 'Temple', cost: 20000000, baseCost: 20000000, cps: 7800, owned: 0 },
+      { name: 'Wizard Tower', cost: 330000000, baseCost: 330000000, cps: 44000, owned: 0 },
+      { name: 'Shipment', cost: 5100000000, baseCost: 5100000000, cps: 260000, owned: 0 },
+      { name: 'Alchemy Lab', cost: 75000000000, baseCost: 75000000000, cps: 1600000, owned: 0 },
+      { name: 'Portal', cost: 1000000000000, baseCost: 1000000000000, cps: 10000000, owned: 0 }
+    ],
+    upgrades: []
+  };
+
+  state.buildings.forEach((item) => {
+    state.upgrades.push({ name: `Reinforced ${item.name}`, cost: item.baseCost * 10, req: { type: item.name, count: 1 }, mult: 2, bought: false });
+    state.upgrades.push({ name: `Steel ${item.name}`, cost: item.baseCost * 50, req: { type: item.name, count: 10 }, mult: 2, bought: false });
+  });
+
+  const fmt = (n) => Math.floor(n).toLocaleString();
+  const prestigeMult = () => 1 + state.prestigeChips * 0.02;
+  const baseCps = () => state.buildings.reduce((sum, b) => sum + b.owned * b.cps, 0) * state.multiplier * prestigeMult();
+  const activeCps = () => {
+    let cps = baseCps();
+    if (state.frenzyTimer > 0) cps *= 7;
+    if (state.clotTimer > 0) cps *= 0.5;
+    return cps;
+  };
+  const prestigeGain = () => Math.floor(Math.sqrt(state.totalCookiesBaked / 1000000));
+  const prestigeNeedForNext = () => {
+    const currentGain = prestigeGain();
+    const nextTarget = (currentGain + 1) ** 2 * 1000000;
+    return Math.max(0, nextTarget - state.totalCookiesBaked);
+  };
+
+  const addLog = (msg) => {
+    state.log.unshift(`${new Date().toLocaleTimeString()} — ${msg}`);
+    if (state.log.length > 40) state.log.length = 40;
+  };
+
+  function save() {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  }
+
+  function load() {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      state.cookies = Number(saved.cookies) || 0;
+      state.totalCookiesBaked = Number(saved.totalCookiesBaked) || 0;
+      state.multiplier = Number(saved.multiplier) || 1;
+      state.prestigeChips = Number(saved.prestigeChips) || 0;
+      state.frenzyTimer = Number(saved.frenzyTimer) || 0;
+      state.clickFrenzyTimer = Number(saved.clickFrenzyTimer) || 0;
+      state.clotTimer = Number(saved.clotTimer) || 0;
+      state.toggleKey = (typeof saved.toggleKey === 'string' && saved.toggleKey) ? saved.toggleKey.toLowerCase() : 'h';
+      state.activeTab = saved.activeTab || 'shop';
+      state.log = Array.isArray(saved.log) ? saved.log.slice(0, 40) : [];
+      if (Array.isArray(saved.buildings)) {
+        saved.buildings.forEach((b, i) => {
+          if (!state.buildings[i]) return;
+          state.buildings[i].owned = Number(b.owned) || 0;
+          state.buildings[i].cost = Number(b.cost) || state.buildings[i].baseCost;
+        });
+      }
+      if (Array.isArray(saved.upgrades)) {
+        saved.upgrades.forEach((u, i) => {
+          if (state.upgrades[i]) state.upgrades[i].bought = Boolean(u.bought);
+        });
+      }
+    } catch {
+      localStorage.removeItem(SAVE_KEY);
+    }
+  }
+
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+    #${ROOT_ID} { position:fixed; inset:0; z-index:2147483646; font-family: Georgia, serif; color:#f5e6c8; }
+    #${ROOT_ID} * { box-sizing:border-box; }
+    #${ROOT_ID} .cc-bg { position:absolute; inset:0; background:linear-gradient(90deg,#3a2716 0%,#1f2029 42%,#2a2417 100%); }
+    #${ROOT_ID} .cc-top { position:relative; z-index:1; height:100%; display:grid; grid-template-columns: 34% 31% 35%; }
+    #${ROOT_ID} .cc-col { border-right:1px solid #0007; min-height:0; }
+    #${ROOT_ID} .cc-left { padding:22px 16px; display:flex; flex-direction:column; align-items:center; }
+    #${ROOT_ID} .cc-title { font-size:38px; font-weight:700; margin-bottom:10px; text-shadow:0 2px 8px #000; }
+    #${ROOT_ID} .cc-cookie-count { font-size:44px; color:#ffd37e; text-align:center; }
+    #${ROOT_ID} .cc-cps { font-size:20px; color:#e9d5ae; margin-bottom:8px; }
+    #${ROOT_ID} .cc-cookie { width:260px; height:260px; border-radius:50%; border:8px solid #4f2708; cursor:pointer;
+      background:radial-gradient(circle at 33% 30%, #e3a968 0 33%, #b86f2e 67%, #8f4f1d 100%);
+      box-shadow: inset -12px -18px 22px #0006, 0 6px 18px #000a; font-size:120px; }
+    #${ROOT_ID} .cc-cookie:active { transform:scale(0.96); }
+    #${ROOT_ID} .cc-buffs { min-height:24px; color:#a9ff9f; font-size:16px; margin-top:12px; text-align:center; }
+    #${ROOT_ID} .cc-mid { padding:12px; background:#1118; display:flex; flex-direction:column; gap:10px; }
+    #${ROOT_ID} .cc-panel-title { font-size:22px; margin-bottom:2px; color:#ffe2b3; }
+    #${ROOT_ID} .cc-pstat { font-size:16px; line-height:1.35; color:#e8d9bd; }
+    #${ROOT_ID} .cc-log { flex:1; border:1px solid #0008; background:#0005; overflow:auto; padding:8px; font-size:13px; line-height:1.35; }
+    #${ROOT_ID} .cc-log-entry { padding:4px 0; border-bottom:1px solid #ffffff1f; }
+    #${ROOT_ID} .cc-right { display:flex; flex-direction:column; background:#151619d4; }
+    #${ROOT_ID} .cc-tabs { display:grid; grid-template-columns:1fr 1fr 1fr; }
+    #${ROOT_ID} .cc-tab { border:1px solid #0008; background:#41311f; color:#f9e3bf; padding:10px; cursor:pointer; font-size:16px; }
+    #${ROOT_ID} .cc-tab.active { background:#6d5034; }
+    #${ROOT_ID} .cc-list { flex:1; overflow:auto; padding:10px; }
+    #${ROOT_ID} .cc-card { width:100%; text-align:left; margin-bottom:7px; padding:9px; border:1px solid #0008; color:#fff; cursor:pointer; background:#383838; }
+    #${ROOT_ID} .cc-card.can-buy { background:#446543; }
+    #${ROOT_ID} .cc-controls { display:flex; gap:8px; padding:8px; border-top:1px solid #0009; background:#2a2014; }
+    #${ROOT_ID} .cc-controls button { flex:1; cursor:pointer; padding:7px; background:#3f3f3f; color:#fff; border:1px solid #111; }
+    #${ROOT_ID} .cc-golden { position:fixed; font-size:52px; cursor:pointer; z-index:2147483647; filter:drop-shadow(0 0 8px gold); user-select:none; }
+    #${ROOT_ID} .cc-flash { position:fixed; left:50%; top:15%; transform:translateX(-50%); color:#ffea96; font-size:36px; z-index:2147483647; text-shadow:0 2px 10px #000; pointer-events:none; }
+    #${ROOT_ID} .cc-hotkey-note { margin-top:6px; color:#d7c7aa; font-size:12px; }
+  `;
+  document.head.appendChild(style);
+
+  const root = document.createElement('div');
+  root.id = ROOT_ID;
+  root.innerHTML = policy.createHTML(`
+    <div class="cc-bg"></div>
+    <div class="cc-top">
+      <section class="cc-col cc-left">
+        <div class="cc-title">Cookie Clicker</div>
+        <div id="cc-cookie-count" class="cc-cookie-count">0 cookies</div>
+        <div id="cc-cps" class="cc-cps">per second: 0</div>
+        <button id="cc-cookie" class="cc-cookie">🍪</button>
+        <div id="cc-hotkey-note" class="cc-hotkey-note"></div>
+        <div id="cc-buffs" class="cc-buffs"></div>
+      </section>
+      <section class="cc-col cc-mid">
+        <div class="cc-panel-title">Legacy & Log</div>
+        <div id="cc-prestige-stat" class="cc-pstat"></div>
+        <div id="cc-log" class="cc-log"></div>
+      </section>
+      <section class="cc-col cc-right">
+        <div class="cc-tabs">
+          <button id="cc-tab-shop" class="cc-tab">Buildings</button>
+          <button id="cc-tab-upgrades" class="cc-tab">Upgrades</button>
+          <button id="cc-tab-prestige" class="cc-tab">Prestige</button>
+        </div>
+        <div id="cc-list" class="cc-list"></div>
+        <div class="cc-controls">
+          <button id="cc-keybind">Set Toggle Key</button>
+          <button id="cc-minimize">Close</button>
+          <button id="cc-reset">Hard Reset</button>
+        </div>
+      </section>
+    </div>
+  `);
+  document.body.appendChild(root);
+
+  const els = {
+    cookieCount: root.querySelector('#cc-cookie-count'),
+    cps: root.querySelector('#cc-cps'),
+    cookieBtn: root.querySelector('#cc-cookie'),
+    hotkeyNote: root.querySelector('#cc-hotkey-note'),
+    buffs: root.querySelector('#cc-buffs'),
+    prestigeStat: root.querySelector('#cc-prestige-stat'),
+    log: root.querySelector('#cc-log'),
+    list: root.querySelector('#cc-list'),
+    tabShop: root.querySelector('#cc-tab-shop'),
+    tabUpgrades: root.querySelector('#cc-tab-upgrades'),
+    tabPrestige: root.querySelector('#cc-tab-prestige'),
+    keybind: root.querySelector('#cc-keybind'),
+    close: root.querySelector('#cc-minimize'),
+    reset: root.querySelector('#cc-reset')
+  };
+
+  const flash = (text) => {
+    const f = document.createElement('div');
+    f.className = 'cc-flash';
+    f.textContent = text;
+    document.body.appendChild(f);
+    setTimeout(() => f.remove(), 1600);
+  };
+
+  function renderLog() {
+    els.log.innerHTML = policy.createHTML(state.log.length
+      ? state.log.map((entry) => `<div class="cc-log-entry">${entry}</div>`).join('')
+      : '<div class="cc-log-entry">No activity yet. Click the cookie to begin.</div>');
+  }
+
+  function renderStats() {
+    els.cookieCount.textContent = `${fmt(state.cookies)} cookies`;
+    els.cps.textContent = `per second: ${activeCps().toLocaleString(undefined, { maximumFractionDigits: 1 })}`;
+    const gain = prestigeGain();
+    const need = prestigeNeedForNext();
+    els.hotkeyNote.textContent = `Toggle UI key: ${state.toggleKey.toUpperCase()}`;
+    els.prestigeStat.innerHTML = policy.createHTML(
+      `Prestige chips: <b>${fmt(state.prestigeChips)}</b> (+${(prestigeMult() * 100 - 100).toFixed(0)}% CpS)<br>` +
+      `Ascend reward now: <b>${fmt(gain)}</b> chip(s)<br>` +
+      `Need <b>${fmt(need)}</b> more total cookies for next prestige chip.`
+    );
+
+    const buffs = [];
+    if (state.frenzyTimer > 0) buffs.push(`Frenzy ${Math.ceil(state.frenzyTimer)}s`);
+    if (state.clickFrenzyTimer > 0) buffs.push(`Click Frenzy ${Math.ceil(state.clickFrenzyTimer)}s`);
+    if (state.clotTimer > 0) buffs.push(`Clot ${Math.ceil(state.clotTimer)}s`);
+    els.buffs.textContent = buffs.join(' | ');
+
+    save();
+  }
+
+  function setTab(tab) {
+    state.activeTab = tab;
+    [els.tabShop, els.tabUpgrades, els.tabPrestige].forEach((t) => t.classList.remove('active'));
+    if (tab === 'shop') els.tabShop.classList.add('active');
+    if (tab === 'upgrades') els.tabUpgrades.classList.add('active');
+    if (tab === 'prestige') els.tabPrestige.classList.add('active');
+    renderList();
+  }
+
+  function renderShop() {
+    els.list.innerHTML = '';
+    state.buildings.forEach((b) => {
+      const btn = document.createElement('button');
+      btn.className = `cc-card ${state.cookies >= b.cost ? 'can-buy' : ''}`;
+      btn.innerHTML = policy.createHTML(`<b>${b.name}</b> (${b.owned})<br>Cost: ${fmt(b.cost)} | +${b.cps}/s`);
+      btn.onclick = () => {
+        if (state.cookies < b.cost) return;
+        state.cookies -= b.cost;
+        b.owned += 1;
+        b.cost = Math.ceil(b.cost * 1.15);
+        addLog(`You bought 1 ${b.name}.`);
+        renderAll();
+      };
+      els.list.appendChild(btn);
+    });
+  }
+
+  function renderUpgrades() {
+    els.list.innerHTML = '';
+    let count = 0;
+    state.upgrades.forEach((u) => {
+      const req = state.buildings.find((b) => b.name === u.req.type);
+      if (!u.bought && req && req.owned >= u.req.count) {
+        count += 1;
+        const btn = document.createElement('button');
+        btn.className = `cc-card ${state.cookies >= u.cost ? 'can-buy' : ''}`;
+        btn.innerHTML = policy.createHTML(`<b>${u.name}</b><br>Cost: ${fmt(u.cost)} | x${u.mult} global CpS`);
+        btn.onclick = () => {
+          if (state.cookies < u.cost) return;
+          state.cookies -= u.cost;
+          u.bought = true;
+          state.multiplier *= u.mult;
+          addLog(`You purchased upgrade: ${u.name}.`);
+          flash(`${u.name} bought!`);
+          renderAll();
+        };
+        els.list.appendChild(btn);
+      }
+    });
+    if (!count) {
+      const d = document.createElement('div');
+      d.className = 'cc-log-entry';
+      d.textContent = 'No upgrades unlocked yet.';
+      els.list.appendChild(d);
+    }
+  }
+
+  function renderPrestigePanel() {
+    const gain = prestigeGain();
+    const need = prestigeNeedForNext();
+    els.list.innerHTML = policy.createHTML('');
+    const card = document.createElement('div');
+    card.className = 'cc-log-entry';
+    card.style.fontSize = '15px';
+    card.style.lineHeight = '1.45';
+    card.innerHTML = policy.createHTML(`Total baked: <b>${fmt(state.totalCookiesBaked)}</b><br>Current chips: <b>${fmt(state.prestigeChips)}</b><br>Ascend reward now: <b>${fmt(gain)}</b><br>Need <b>${fmt(need)}</b> for next chip.`);
+
+    const btn = document.createElement('button');
+    btn.className = 'cc-card';
+    btn.style.marginTop = '10px';
+    btn.textContent = gain > 0 ? `Ascend now (+${fmt(gain)} chips)` : 'Bake more cookies to ascend';
+    if (gain > 0) btn.classList.add('can-buy');
+    btn.onclick = () => {
+      if (gain <= 0) return;
+      if (!confirm(`Ascend for ${gain} prestige chips? This resets current run progress.`)) return;
+      state.prestigeChips += gain;
+      state.cookies = 0;
+      state.multiplier = 1;
+      state.frenzyTimer = 0;
+      state.clickFrenzyTimer = 0;
+      state.clotTimer = 0;
+      state.buildings.forEach((b) => { b.owned = 0; b.cost = b.baseCost; });
+      state.upgrades.forEach((u) => { u.bought = false; });
+      addLog(`You ascended and gained ${gain} prestige chip(s).`);
+      flash(`Ascended +${gain}`);
+      setTab('shop');
+      renderAll();
+    };
+
+    els.list.append(card, btn);
+  }
+
+  function renderList() {
+    if (state.activeTab === 'shop') renderShop();
+    if (state.activeTab === 'upgrades') renderUpgrades();
+    if (state.activeTab === 'prestige') renderPrestigePanel();
+  }
+
+  function renderAll() {
+    renderStats();
+    renderList();
+    renderLog();
+  }
+
+  function spawnGoldenCookie() {
+    if (!document.body.contains(root)) return;
+    const gc = document.createElement('div');
+    gc.className = 'cc-golden';
+    gc.textContent = '✨🍪✨';
+    gc.style.left = `${10 + Math.random() * 80}%`;
+    gc.style.top = `${10 + Math.random() * 80}%`;
+    document.body.appendChild(gc);
+
+    gc.onclick = () => {
+      const r = Math.random();
+      if (r < 0.33) {
+        const gain = Math.min(state.cookies * 0.15 + 13, baseCps() * 900 + 13);
+        state.cookies += gain;
+        state.totalCookiesBaked += gain;
+        addLog(`Golden cookie! Lucky gave ${fmt(gain)} cookies.`);
+        flash(`Lucky! +${fmt(gain)}`);
+      } else if (r < 0.66) {
+        state.frenzyTimer = 77;
+        addLog('Golden cookie! Frenzy started (x7 production).');
+        flash('Frenzy x7!');
+      } else if (r < 0.88) {
+        state.clickFrenzyTimer = 13;
+        addLog('Golden cookie! Click Frenzy started (x777 click power).');
+        flash('Click Frenzy!');
+      } else {
+        state.clotTimer = 66;
+        addLog('Golden cookie backfired: Clot (half production).');
+        flash('Clot...');
+      }
+      gc.remove();
+      renderAll();
+    };
+
+    setTimeout(() => gc.remove(), 13000);
+    setTimeout(spawnGoldenCookie, 45000 + Math.random() * 120000);
+  }
+
+  els.cookieBtn.onclick = () => {
+    let click = state.multiplier * prestigeMult();
+    if (state.clickFrenzyTimer > 0) click *= 777;
+    state.cookies += click;
+    state.totalCookiesBaked += click;
+    renderAll();
+  };
+
+  els.tabShop.onclick = () => setTab('shop');
+  els.tabUpgrades.onclick = () => setTab('upgrades');
+  els.tabPrestige.onclick = () => setTab('prestige');
+
+  function toggleVisibility() {
+    state.isHidden = !state.isHidden;
+    root.style.display = state.isHidden ? 'none' : 'block';
+    addLog(`UI ${state.isHidden ? 'hidden' : 'shown'} via keybind (${state.toggleKey.toUpperCase()}).`);
+    save();
+  }
+
+  const onKeydown = (e) => {
+    if (e.key && e.key.toLowerCase() === state.toggleKey) {
+      e.preventDefault();
+      toggleVisibility();
+    }
+  };
+  document.addEventListener('keydown', onKeydown);
+
+  els.keybind.onclick = () => {
+    const input = prompt('Type a single key to toggle hide/show:', state.toggleKey);
+    if (!input) return;
+    const key = input.trim().toLowerCase();
+    if (key.length !== 1) {
+      alert('Please enter exactly one character key.');
+      return;
+    }
+    state.toggleKey = key;
+    addLog(`Toggle key changed to ${state.toggleKey.toUpperCase()}.`);
+    renderAll();
+  };
+
+  function cleanupAndRemove() {
+    document.removeEventListener('keydown', onKeydown);
+    clearInterval(tickId);
+    root.remove();
+    style.remove();
+  }
+
+  els.close.onclick = () => {
+    cleanupAndRemove();
+  };
+
+  els.reset.onclick = () => {
+    if (!confirm('This will wipe all saved progress. Continue?')) return;
+    localStorage.removeItem(SAVE_KEY);
+    cleanupAndRemove();
+  };
+
+  const tickId = setInterval(() => {
+    if (!document.body.contains(root)) {
+      clearInterval(tickId);
+      return;
+    }
+    const gain = activeCps() / 10;
+    state.cookies += gain;
+    state.totalCookiesBaked += gain;
+    if (state.frenzyTimer > 0) state.frenzyTimer = Math.max(0, state.frenzyTimer - 0.1);
+    if (state.clickFrenzyTimer > 0) state.clickFrenzyTimer = Math.max(0, state.clickFrenzyTimer - 0.1);
+    if (state.clotTimer > 0) state.clotTimer = Math.max(0, state.clotTimer - 0.1);
+    renderAll();
+  }, 100);
+
+  load();
+  if (!state.log.length) addLog('Game started. Welcome, baker!');
+  setTab(state.activeTab || 'shop');
+  root.style.display = state.isHidden ? 'none' : 'block';
+  renderAll();
+  setTimeout(spawnGoldenCookie, 25000);
+})();
