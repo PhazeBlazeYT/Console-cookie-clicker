@@ -189,7 +189,12 @@
     #${ROOT_ID} .cc-golden { position:fixed; font-size:52px; cursor:pointer; z-index:2147483647; filter:drop-shadow(0 0 8px gold); user-select:none; }
     #${ROOT_ID} .cc-flash { position:fixed; left:50%; top:15%; transform:translateX(-50%); color:#ffea96; font-size:36px; z-index:2147483647; text-shadow:0 2px 10px #000; pointer-events:none; }
     #${ROOT_ID} .cc-click-float { position:fixed; z-index:2147483647; pointer-events:none; color:#ffd88a; font-weight:bold; text-shadow:0 2px 6px #000; animation: cc-rise 900ms ease-out forwards; }
+    #${ROOT_ID} .cc-cookie-pop { position:fixed; z-index:2147483647; pointer-events:none; font-size:16px; filter:drop-shadow(0 2px 3px #0007); animation: cc-cookie-pop 700ms cubic-bezier(.17,.67,.32,1) forwards; }
     @keyframes cc-rise { from { opacity:1; transform:translate(-50%, 0); } to { opacity:0; transform:translate(-50%, -48px); } }
+    @keyframes cc-cookie-pop {
+      from { opacity:1; transform:translate(0,0) scale(1); }
+      to { opacity:0; transform:translate(var(--dx), var(--dy)) scale(0.55) rotate(var(--rot)); }
+    }
     #${ROOT_ID} .cc-hotkey-note { margin-top:6px; color:#d7c7aa; font-size:12px; }
   `;
   document.head.appendChild(style);
@@ -282,6 +287,24 @@
     f.style.top = `${y}px`;
     document.body.appendChild(f);
     setTimeout(() => f.remove(), 920);
+  };
+
+  const spawnCookieBurst = (x, y) => {
+    const count = 8;
+    for (let i = 0; i < count; i += 1) {
+      const p = document.createElement('div');
+      p.className = 'cc-cookie-pop';
+      p.textContent = '🍪';
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+      const dist = 22 + Math.random() * 38;
+      p.style.left = `${x}px`;
+      p.style.top = `${y}px`;
+      p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+      p.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+      p.style.setProperty('--rot', `${-25 + Math.random() * 50}deg`);
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 740);
+    }
   };
 
   const news = [
@@ -598,6 +621,7 @@
     state.totalClicks += 1;
     state.highestCookies = Math.max(state.highestCookies, state.cookies);
     spawnClickFloat(e.clientX, e.clientY, click);
+    spawnCookieBurst(e.clientX, e.clientY);
     renderAll();
   };
 

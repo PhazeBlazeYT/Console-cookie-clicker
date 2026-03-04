@@ -9,7 +9,7 @@ Use only `game.js`.
 4. Press Enter.
 
 ## Added OG-inspired features
-- Cookies now pop out from your cursor on every click (floating `+cookies` text)
+- Cookies now pop out from your cursor on every click (floating `+cookies` text + bouncing mini-cookie particles)
 - More late-game buildings (Time Machine, Antimatter Condenser)
 - Buy **and sell** modes with quantity toggles (`x1`, `x10`, `x100`)
 - Achievements tab with unlock tracking and milestone toasts
