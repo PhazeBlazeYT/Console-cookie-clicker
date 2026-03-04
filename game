@@ -65,6 +65,10 @@
     { id: 'golden-10', name: 'Gilded finger', desc: 'Click 10 golden cookies.', check: () => state.goldenClicks >= 10 }
   ];
 
+  const fmt = (n) => Math.floor(n).toLocaleString();
+  const COST_GROWTH = 1.18;
+  const UPGRADE_PRICE_MULT = 1.4;
+
   state.buildings.forEach((item) => {
     state.upgrades.push({ name: `Reinforced ${item.name}`, cost: Math.ceil(item.baseCost * 10 * UPGRADE_PRICE_MULT), req: { type: 'building', name: item.name, count: 1 }, mult: 2, bought: false });
     state.upgrades.push({ name: `Steel ${item.name}`, cost: Math.ceil(item.baseCost * 50 * UPGRADE_PRICE_MULT), req: { type: 'building', name: item.name, count: 10 }, mult: 2, bought: false });
@@ -75,9 +79,6 @@
   state.upgrades.push({ name: 'Kitten Workers', cost: 15000000, req: { type: 'achievements', count: 4 }, milkMult: 1.1, bought: false });
   state.upgrades.push({ name: 'Kitten Engineers', cost: 1500000000, req: { type: 'achievements', count: 7 }, milkMult: 1.15, bought: false });
 
-  const fmt = (n) => Math.floor(n).toLocaleString();
-  const COST_GROWTH = 1.18;
-  const UPGRADE_PRICE_MULT = 1.4;
   const milkPercent = () => state.achievements.length * 4;
   const milkMult = () => state.upgrades.filter((u) => u.bought && u.milkMult).reduce((m, u) => m * u.milkMult, 1);
   const clickMult = () => state.upgrades.filter((u) => u.bought && u.clickMult).reduce((m, u) => m * u.clickMult, 1);
