@@ -9,10 +9,20 @@ Use only `game.js`.
 4. Press Enter.
 
 ## Added OG-inspired features
+- Cookies now pop out from your cursor on every click (floating `+cookies` text + bouncing mini-cookie particles)
 - More late-game buildings (Time Machine, Antimatter Condenser)
 - Buy **and sell** modes with quantity toggles (`x1`, `x10`, `x100`)
 - Achievements tab with unlock tracking and milestone toasts
+- Grandma and Factory work areas in the center panel (plus farm/mine workforce rows)
+- New Stats tab (bank, lifetime, handmade, CpS, totals)
 - Milk percentage + kitten upgrades tied to achievements
 - Extra mouse/click upgrades and click/golden-click stats
-- News ticker flavor text and expanded golden-cookie outcomes (Lucky, Frenzy, Click Frenzy, Building Special, Ruin+Clot)
+- Upgrade area now grouped with OG-style category tags/icons and unlock requirement text
+- News ticker flavor text and expanded golden-cookie outcomes (Lucky, Frenzy, Click Frenzy, Building Special, Cookie Storm, Ruin+Clot)
 - Prestige + keybind hide/show + autosave (`cc_pro_console_save_v5`)
+
+- 3D-style visual polish pass: beveled buttons/cards/icons, depth shading, animated cookie bob, animated background drift, and livelier golden-cookie motion
+
+- Harder economy tuning: higher base building prices, steeper scaling curve, and pricier upgrades for a more challenging run
+
+- Prestige exploit fix: ascend reward now grants only NEW chips (no duplicate claiming from unchanged lifetime total)
