@@ -35,19 +35,19 @@
     buyMode: 'buy',
     log: [],
     buildings: [
-      { name: 'Cursor', cost: 15, baseCost: 15, cps: 0.1, owned: 0 },
-      { name: 'Grandma', cost: 100, baseCost: 100, cps: 1, owned: 0 },
-      { name: 'Farm', cost: 1100, baseCost: 1100, cps: 8, owned: 0 },
-      { name: 'Mine', cost: 12000, baseCost: 12000, cps: 47, owned: 0 },
-      { name: 'Factory', cost: 130000, baseCost: 130000, cps: 260, owned: 0 },
-      { name: 'Bank', cost: 1400000, baseCost: 1400000, cps: 1400, owned: 0 },
-      { name: 'Temple', cost: 20000000, baseCost: 20000000, cps: 7800, owned: 0 },
-      { name: 'Wizard Tower', cost: 330000000, baseCost: 330000000, cps: 44000, owned: 0 },
-      { name: 'Shipment', cost: 5100000000, baseCost: 5100000000, cps: 260000, owned: 0 },
-      { name: 'Alchemy Lab', cost: 75000000000, baseCost: 75000000000, cps: 1600000, owned: 0 },
-      { name: 'Portal', cost: 1000000000000, baseCost: 1000000000000, cps: 10000000, owned: 0 },
-      { name: 'Time Machine', cost: 14000000000000, baseCost: 14000000000000, cps: 65000000, owned: 0 },
-      { name: 'Antimatter Condenser', cost: 170000000000000, baseCost: 170000000000000, cps: 430000000, owned: 0 }
+      { name: 'Cursor', cost: 20, baseCost: 20, cps: 0.1, owned: 0 },
+      { name: 'Grandma', cost: 135, baseCost: 135, cps: 1, owned: 0 },
+      { name: 'Farm', cost: 1485, baseCost: 1485, cps: 8, owned: 0 },
+      { name: 'Mine', cost: 16200, baseCost: 16200, cps: 47, owned: 0 },
+      { name: 'Factory', cost: 175500, baseCost: 175500, cps: 260, owned: 0 },
+      { name: 'Bank', cost: 1890000, baseCost: 1890000, cps: 1400, owned: 0 },
+      { name: 'Temple', cost: 27000000, baseCost: 27000000, cps: 7800, owned: 0 },
+      { name: 'Wizard Tower', cost: 445500000, baseCost: 445500000, cps: 44000, owned: 0 },
+      { name: 'Shipment', cost: 6885000000, baseCost: 6885000000, cps: 260000, owned: 0 },
+      { name: 'Alchemy Lab', cost: 101250000000, baseCost: 101250000000, cps: 1600000, owned: 0 },
+      { name: 'Portal', cost: 1350000000000, baseCost: 1350000000000, cps: 10000000, owned: 0 },
+      { name: 'Time Machine', cost: 18900000000000, baseCost: 18900000000000, cps: 65000000, owned: 0 },
+      { name: 'Antimatter Condenser', cost: 229500000000000, baseCost: 229500000000000, cps: 430000000, owned: 0 }
     ],
     upgrades: [],
     achievements: [],
@@ -66,16 +66,18 @@
   ];
 
   state.buildings.forEach((item) => {
-    state.upgrades.push({ name: `Reinforced ${item.name}`, cost: item.baseCost * 10, req: { type: 'building', name: item.name, count: 1 }, mult: 2, bought: false });
-    state.upgrades.push({ name: `Steel ${item.name}`, cost: item.baseCost * 50, req: { type: 'building', name: item.name, count: 10 }, mult: 2, bought: false });
+    state.upgrades.push({ name: `Reinforced ${item.name}`, cost: Math.ceil(item.baseCost * 10 * UPGRADE_PRICE_MULT), req: { type: 'building', name: item.name, count: 1 }, mult: 2, bought: false });
+    state.upgrades.push({ name: `Steel ${item.name}`, cost: Math.ceil(item.baseCost * 50 * UPGRADE_PRICE_MULT), req: { type: 'building', name: item.name, count: 10 }, mult: 2, bought: false });
   });
 
-  state.upgrades.push({ name: 'Plastic Mouse', cost: 50000, req: { type: 'total', count: 10000 }, clickMult: 2, bought: false });
-  state.upgrades.push({ name: 'Iron Mouse', cost: 5000000, req: { type: 'total', count: 1000000 }, clickMult: 2, bought: false });
-  state.upgrades.push({ name: 'Kitten Workers', cost: 9000000, req: { type: 'achievements', count: 4 }, milkMult: 1.1, bought: false });
-  state.upgrades.push({ name: 'Kitten Engineers', cost: 900000000, req: { type: 'achievements', count: 7 }, milkMult: 1.15, bought: false });
+  state.upgrades.push({ name: 'Plastic Mouse', cost: 90000, req: { type: 'total', count: 10000 }, clickMult: 2, bought: false });
+  state.upgrades.push({ name: 'Iron Mouse', cost: 15000000, req: { type: 'total', count: 1000000 }, clickMult: 2, bought: false });
+  state.upgrades.push({ name: 'Kitten Workers', cost: 15000000, req: { type: 'achievements', count: 4 }, milkMult: 1.1, bought: false });
+  state.upgrades.push({ name: 'Kitten Engineers', cost: 1500000000, req: { type: 'achievements', count: 7 }, milkMult: 1.15, bought: false });
 
   const fmt = (n) => Math.floor(n).toLocaleString();
+  const COST_GROWTH = 1.18;
+  const UPGRADE_PRICE_MULT = 1.4;
   const milkPercent = () => state.achievements.length * 4;
   const milkMult = () => state.upgrades.filter((u) => u.bought && u.milkMult).reduce((m, u) => m * u.milkMult, 1);
   const clickMult = () => state.upgrades.filter((u) => u.bought && u.clickMult).reduce((m, u) => m * u.clickMult, 1);
@@ -88,10 +90,10 @@
     if (state.buildingSpecialTimer > 0) cps *= 2;
     return cps;
   };
-  const prestigeGain = () => Math.floor(Math.sqrt(state.totalCookiesBaked / 1000000));
+  const prestigePotential = () => Math.floor(Math.sqrt(state.totalCookiesBaked / 1000000));
+  const prestigeGain = () => Math.max(0, prestigePotential() - state.prestigeChips);
   const prestigeNeedForNext = () => {
-    const currentGain = prestigeGain();
-    const nextTarget = (currentGain + 1) ** 2 * 1000000;
+    const nextTarget = (prestigePotential() + 1) ** 2 * 1000000;
     return Math.max(0, nextTarget - state.totalCookiesBaked);
   };
 
@@ -358,7 +360,7 @@
     els.hotkeyNote.textContent = `Toggle UI key: ${state.toggleKey.toUpperCase()} | Milk: ${milkPercent()}%`;
     els.prestigeStat.innerHTML = policy.createHTML(
       `Prestige chips: <b>${fmt(state.prestigeChips)}</b> (+${(prestigeMult() * 100 - 100).toFixed(0)}% CpS)<br>` +
-      `Ascend reward now: <b>${fmt(gain)}</b> chip(s)<br>` +
+      `Ascend reward now: <b>${fmt(gain)}</b> chip(s) (Potential: ${fmt(prestigePotential())})<br>` +
       `Need <b>${fmt(need)}</b> more total cookies for next prestige chip.<br>` +
       `Clicks: <b>${fmt(state.totalClicks)}</b> | Golden clicks: <b>${fmt(state.goldenClicks)}</b> | Achievements: <b>${state.achievements.length}/${achievementDefs.length}</b><br>` +
       `Hand-made: <b>${fmt(state.handMadeCookies)}</b> | Highest bank: <b>${fmt(state.highestCookies)}</b>`
@@ -395,7 +397,7 @@
 
   function getBulkPrice(baseCost, amount, owned) {
     let total = 0;
-    for (let i = 0; i < amount; i += 1) total += Math.ceil(baseCost * (1.15 ** (owned + i)));
+    for (let i = 0; i < amount; i += 1) total += Math.ceil(baseCost * (COST_GROWTH ** (owned + i)));
     return total;
   }
 
@@ -404,7 +406,7 @@
     for (let i = 0; i < amount; i += 1) {
       const tier = owned - 1 - i;
       if (tier < 0) break;
-      total += Math.floor((Math.ceil(baseCost * (1.15 ** tier))) * 0.5);
+      total += Math.floor((Math.ceil(baseCost * (COST_GROWTH ** tier))) * 0.5);
     }
     return total;
   }
@@ -442,7 +444,7 @@
           b.owned -= maxSell;
           addLog(`You sold ${maxSell} ${b.name}${maxSell > 1 ? 's' : ''}.`);
         }
-        b.cost = Math.ceil(b.baseCost * (1.15 ** b.owned));
+        b.cost = Math.ceil(b.baseCost * (COST_GROWTH ** b.owned));
         checkAchievements();
         renderAll();
       };
@@ -535,7 +537,7 @@
     card.className = 'cc-log-entry';
     card.style.fontSize = '15px';
     card.style.lineHeight = '1.45';
-    card.innerHTML = policy.createHTML(`Total baked: <b>${fmt(state.totalCookiesBaked)}</b><br>Current chips: <b>${fmt(state.prestigeChips)}</b><br>Ascend reward now: <b>${fmt(gain)}</b><br>Need <b>${fmt(need)}</b> for next chip.`);
+    card.innerHTML = policy.createHTML(`Total baked: <b>${fmt(state.totalCookiesBaked)}</b><br>Current chips: <b>${fmt(state.prestigeChips)}</b><br>Potential chips: <b>${fmt(prestigePotential())}</b><br>Ascend reward now: <b>${fmt(gain)}</b><br>Need <b>${fmt(need)}</b> for next chip.`);
 
     const btn = document.createElement('button');
     btn.className = 'cc-card';
@@ -544,7 +546,7 @@
     if (gain > 0) btn.classList.add('can-buy');
     btn.onclick = () => {
       if (gain <= 0) return;
-      if (!confirm(`Ascend for ${gain} prestige chips? This resets current run progress.`)) return;
+      if (!confirm(`Ascend for ${gain} NEW prestige chips? This resets current run progress.`)) return;
       state.prestigeChips += gain;
       state.cookies = 0;
       state.multiplier = 1;
