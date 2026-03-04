@@ -13,8 +13,10 @@ Use only `game.js`.
 - More late-game buildings (Time Machine, Antimatter Condenser)
 - Buy **and sell** modes with quantity toggles (`x1`, `x10`, `x100`)
 - Achievements tab with unlock tracking and milestone toasts
+- Grandma and Factory work areas in the center panel (plus farm/mine workforce rows)
 - New Stats tab (bank, lifetime, handmade, CpS, totals)
 - Milk percentage + kitten upgrades tied to achievements
 - Extra mouse/click upgrades and click/golden-click stats
+- Upgrade area now grouped with OG-style category tags/icons and unlock requirement text
 - News ticker flavor text and expanded golden-cookie outcomes (Lucky, Frenzy, Click Frenzy, Building Special, Cookie Storm, Ruin+Clot)
 - Prestige + keybind hide/show + autosave (`cc_pro_console_save_v5`)

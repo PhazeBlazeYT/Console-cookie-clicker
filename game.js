@@ -169,6 +169,10 @@
     #${ROOT_ID} .cc-mid { padding:12px; background:#1118; display:flex; flex-direction:column; gap:10px; }
     #${ROOT_ID} .cc-panel-title { font-size:22px; margin-bottom:2px; color:#ffe2b3; }
     #${ROOT_ID} .cc-pstat { font-size:16px; line-height:1.35; color:#e8d9bd; }
+    #${ROOT_ID} .cc-scene { border:1px solid #0008; background:#1a1310; padding:8px; min-height:120px; }
+    #${ROOT_ID} .cc-scene-title { font-size:14px; color:#f2d4a3; margin-bottom:6px; }
+    #${ROOT_ID} .cc-scene-row { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px; }
+    #${ROOT_ID} .cc-worker { font-size:18px; line-height:1; }
     #${ROOT_ID} .cc-log { flex:1; border:1px solid #0008; background:#0005; overflow:auto; padding:8px; font-size:13px; line-height:1.35; }
     #${ROOT_ID} .cc-log-entry { padding:4px 0; border-bottom:1px solid #ffffff1f; }
     #${ROOT_ID} .cc-right { display:flex; flex-direction:column; background:#151619d4; }
@@ -216,6 +220,7 @@
       <section class="cc-col cc-mid">
         <div class="cc-panel-title">Legacy & Log</div>
         <div id="cc-prestige-stat" class="cc-pstat"></div>
+        <div id="cc-scene" class="cc-scene"></div>
         <div id="cc-log" class="cc-log"></div>
       </section>
       <section class="cc-col cc-right">
@@ -254,6 +259,7 @@
     hotkeyNote: root.querySelector('#cc-hotkey-note'),
     buffs: root.querySelector('#cc-buffs'),
     prestigeStat: root.querySelector('#cc-prestige-stat'),
+    scene: root.querySelector('#cc-scene'),
     log: root.querySelector('#cc-log'),
     list: root.querySelector('#cc-list'),
     tabShop: root.querySelector('#cc-tab-shop'),
@@ -436,6 +442,41 @@
     });
   }
 
+  function reqText(req) {
+    if (!req) return 'Unlocked';
+    if (req.type === 'building') return `Needs ${req.count} ${req.name}${req.count > 1 ? 's' : ''}`;
+    if (req.type === 'total') return `Needs ${fmt(req.count)} lifetime cookies`;
+    if (req.type === 'achievements') return `Needs ${req.count} achievements`;
+    return 'Locked';
+  }
+
+  function upgradeCategory(u) {
+    if (u.milkMult) return { label: 'Kitten', icon: '🐱' };
+    if (u.clickMult) return { label: 'Click', icon: '🖱️' };
+    return { label: 'Production', icon: '⚙️' };
+  }
+
+  function renderProductionScene() {
+    const grandma = state.buildings.find((b) => b.name === 'Grandma')?.owned || 0;
+    const factory = state.buildings.find((b) => b.name === 'Factory')?.owned || 0;
+    const farm = state.buildings.find((b) => b.name === 'Farm')?.owned || 0;
+    const mine = state.buildings.find((b) => b.name === 'Mine')?.owned || 0;
+
+    const row = (title, icon, count, maxDraw = 18) => {
+      const shown = Math.min(count, maxDraw);
+      const workers = Array.from({ length: shown }, () => `<span class="cc-worker">${icon}</span>`).join('');
+      const extra = count > maxDraw ? ` <span style="font-size:12px;color:#d9be96">+${count - maxDraw} more</span>` : '';
+      return `<div class="cc-scene-title">${title}: <b>${count}</b>${extra}</div><div class="cc-scene-row">${workers || '<span style="font-size:12px;color:#9f8d73">none yet</span>'}</div>`;
+    };
+
+    els.scene.innerHTML = policy.createHTML(
+      row('Grandmas baking', '👵', grandma) +
+      row('Factories running', '🏭', factory, 12) +
+      row('Farms harvesting', '🌾', farm, 16) +
+      row('Mines digging', '⛏️', mine, 16)
+    );
+  }
+
   function renderUpgrades() {
     els.list.innerHTML = '';
     let count = 0;
@@ -448,7 +489,8 @@
         if (u.mult) effects.push(`x${u.mult} global CpS`);
         if (u.clickMult) effects.push(`x${u.clickMult} click power`);
         if (u.milkMult) effects.push(`x${u.milkMult} milk bonus`);
-        btn.innerHTML = policy.createHTML(`<b>${u.name}</b><br>Cost: ${fmt(u.cost)} | ${effects.join(' + ')}`);
+        const cat = upgradeCategory(u);
+        btn.innerHTML = policy.createHTML(`<b>${cat.icon} ${u.name}</b> <span style="color:#c6d6ff">[${cat.label}]</span><br>Cost: ${fmt(u.cost)} | ${effects.join(' + ')}<br><small style="color:#d9c39f">${reqText(u.req)}</small>`);
         btn.onclick = () => {
           if (state.cookies < u.cost) return;
           state.cookies -= u.cost;
@@ -464,7 +506,7 @@
     if (!count) {
       const d = document.createElement('div');
       d.className = 'cc-log-entry';
-      d.textContent = 'No upgrades unlocked yet.';
+      d.textContent = 'No upgrades available yet. Buy more buildings or bake more cookies.';
       els.list.appendChild(d);
     }
   }
@@ -559,6 +601,7 @@
   function renderAll() {
     checkAchievements();
     renderStats();
+    renderProductionScene();
     renderList();
     renderLog();
   }
