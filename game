@@ -21,10 +21,12 @@
     totalClicks: 0,
     handMadeCookies: 0,
     goldenClicks: 0,
+    goldenSpawns: 0,
     multiplier: 1,
     prestigeChips: 0,
     frenzyTimer: 0,
     clickFrenzyTimer: 0,
+    elderFrenzyTimer: 0,
     clotTimer: 0,
     cookieStormTimer: 0,
     buildingSpecialTimer: 0,
@@ -62,7 +64,18 @@
     { id: 'cursor-10', name: 'Pointer power', desc: 'Own 10 Cursors.', check: () => (state.buildings.find((b) => b.name === 'Cursor')?.owned || 0) >= 10 },
     { id: 'grandma-10', name: 'Elder care', desc: 'Own 10 Grandmas.', check: () => (state.buildings.find((b) => b.name === 'Grandma')?.owned || 0) >= 10 },
     { id: 'golden-1', name: 'Golden touch', desc: 'Click 1 golden cookie.', check: () => state.goldenClicks >= 1 },
-    { id: 'golden-10', name: 'Gilded finger', desc: 'Click 10 golden cookies.', check: () => state.goldenClicks >= 10 }
+    { id: 'golden-10', name: 'Gilded finger', desc: 'Click 10 golden cookies.', check: () => state.goldenClicks >= 10 },
+    { id: 'golden-25', name: 'Golden jackpot', desc: 'Click 25 golden cookies.', check: () => state.goldenClicks >= 25 },
+    { id: 'grandma-50', name: 'Grandma army', desc: 'Own 50 Grandmas.', check: () => (state.buildings.find((b) => b.name === 'Grandma')?.owned || 0) >= 50 },
+    { id: 'factory-25', name: 'Industrial district', desc: 'Own 25 Factories.', check: () => (state.buildings.find((b) => b.name === 'Factory')?.owned || 0) >= 25 },
+    { id: 'bake-1b', name: 'Cookie empire', desc: 'Bake 1 billion cookies total.', check: () => state.totalCookiesBaked >= 1000000000 },
+    { id: 'cps-1m', name: 'Speed bakery', desc: 'Reach 1 million CpS.', check: () => activeCps() >= 1000000 },
+    { id: 'owned-200', name: 'It all adds up', desc: 'Own 200 total buildings.', check: () => state.buildings.reduce((n, b) => n + b.owned, 0) >= 200 },
+    { id: 'click-1k', name: 'Click legion', desc: 'Click 1,000 times.', check: () => state.totalClicks >= 1000 },
+    { id: 'golden-50', name: 'Gold rush', desc: 'Click 50 golden cookies.', check: () => state.goldenClicks >= 50 },
+    { id: 'bake-1t', name: 'Galactic bakery', desc: 'Bake 1 trillion cookies total.', check: () => state.totalCookiesBaked >= 1000000000000 },
+    { id: 'prestige-10', name: 'Legacy keeper', desc: 'Own 10 prestige chips.', check: () => state.prestigeChips >= 10 },
+    { id: 'owned-500', name: 'Cookie metropolis', desc: 'Own 500 total buildings.', check: () => state.buildings.reduce((n, b) => n + b.owned, 0) >= 500 }
   ];
 
   const fmt = (n) => Math.floor(n).toLocaleString();
@@ -87,6 +100,7 @@
   const activeCps = () => {
     let cps = baseCps();
     if (state.frenzyTimer > 0) cps *= 7;
+    if (state.elderFrenzyTimer > 0) cps *= 666;
     if (state.clotTimer > 0) cps *= 0.5;
     if (state.buildingSpecialTimer > 0) cps *= 2;
     return cps;
@@ -117,11 +131,13 @@
         totalCookiesBaked: Number(saved.totalCookiesBaked) || 0,
         totalClicks: Number(saved.totalClicks) || 0,
         goldenClicks: Number(saved.goldenClicks) || 0,
+        goldenSpawns: Number(saved.goldenSpawns) || 0,
         handMadeCookies: Number(saved.handMadeCookies) || 0,
         multiplier: Number(saved.multiplier) || 1,
         prestigeChips: Number(saved.prestigeChips) || 0,
         frenzyTimer: Number(saved.frenzyTimer) || 0,
         clickFrenzyTimer: Number(saved.clickFrenzyTimer) || 0,
+        elderFrenzyTimer: Number(saved.elderFrenzyTimer) || 0,
         clotTimer: Number(saved.clotTimer) || 0,
         cookieStormTimer: Number(saved.cookieStormTimer) || 0,
         buildingSpecialTimer: Number(saved.buildingSpecialTimer) || 0,
@@ -156,11 +172,15 @@
   style.textContent = `
     #${ROOT_ID} { position:fixed; inset:0; z-index:2147483646; font-family: Georgia, serif; color:#f5e6c8; }
     #${ROOT_ID} * { box-sizing:border-box; }
-    #${ROOT_ID} .cc-bg { position:absolute; inset:-6%; background:radial-gradient(120% 120% at 20% 10%, #674227 0%, #2d2419 42%, #1f2029 70%, #2a2417 100%); animation: cc-pan 18s ease-in-out infinite alternate; }
+    #${ROOT_ID} .cc-bg { position:absolute; inset:-6%; background:
+      radial-gradient(120% 120% at 20% 10%, #7a4a2e 0%, #3c2a1f 42%, #2a2430 70%, #2f241b 100%),
+      repeating-linear-gradient(45deg,#ffffff08 0 8px,#00000000 8px 16px); animation: cc-pan 18s ease-in-out infinite alternate; }
     #${ROOT_ID} .cc-top { position:relative; z-index:1; height:100%; display:grid; grid-template-columns: 34% 31% 35%; }
     #${ROOT_ID} .cc-col { border-right:1px solid #0007; min-height:0; }
     #${ROOT_ID} .cc-left { padding:22px 16px; display:flex; flex-direction:column; align-items:center; }
     #${ROOT_ID} .cc-title { font-size:38px; font-weight:700; margin-bottom:10px; text-shadow:0 2px 8px #000; }
+    #${ROOT_ID} .cc-grandma-badge { margin-bottom:8px; font-size:28px; filter:drop-shadow(0 2px 3px #0008); }
+    #${ROOT_ID} .cc-lace { width:100%; height:8px; margin-bottom:8px; background:repeating-linear-gradient(90deg,#f6e7cf 0 10px,#e5cfad 10px 20px); box-shadow:0 1px 0 #0005; border-radius:4px; }
     #${ROOT_ID} .cc-news { width:100%; margin-bottom:10px; padding:6px; border:1px solid #0008; background:linear-gradient(180deg,#3a2a18,#22170f); color:#f3d39b; font-size:13px; text-align:center; border-radius:8px; box-shadow: inset 0 1px 0 #fff2, 0 4px 10px #0005; animation: cc-news-glow 3s ease-in-out infinite; }
     #${ROOT_ID} .cc-cookie-count { font-size:44px; color:#ffd37e; text-align:center; }
     #${ROOT_ID} .cc-cps { font-size:20px; color:#e9d5ae; margin-bottom:8px; }
@@ -169,10 +189,10 @@
       box-shadow: inset -12px -18px 22px #0006, inset 8px 8px 12px #fff3, 0 12px 24px #000a; font-size:120px; transform-style:preserve-3d; animation: cc-cookie-bob 2.2s ease-in-out infinite; }
     #${ROOT_ID} .cc-cookie:active { transform:translateY(3px) scale(0.96); }
     #${ROOT_ID} .cc-buffs { min-height:24px; color:#a9ff9f; font-size:16px; margin-top:12px; text-align:center; }
-    #${ROOT_ID} .cc-mid { padding:12px; background:#1118; display:flex; flex-direction:column; gap:10px; }
-    #${ROOT_ID} .cc-panel-title { font-size:22px; margin-bottom:2px; color:#ffe2b3; }
+    #${ROOT_ID} .cc-mid { padding:12px; background:linear-gradient(180deg,#3d2c38d9,#1a1417d9); display:flex; flex-direction:column; gap:10px; border-left:1px solid #f2d3ff33; border-right:1px solid #f2d3ff22; }
+    #${ROOT_ID} .cc-panel-title { font-size:22px; margin-bottom:2px; color:#ffe2b3; font-family: 'Times New Roman', serif; letter-spacing:0.5px; }
     #${ROOT_ID} .cc-pstat { font-size:16px; line-height:1.35; color:#e8d9bd; }
-    #${ROOT_ID} .cc-scene { border:1px solid #0008; background:#1a1310; padding:8px; min-height:120px; }
+    #${ROOT_ID} .cc-scene { border:1px solid #0008; background:linear-gradient(180deg,#2d1e21,#1a1310); padding:8px; min-height:120px; box-shadow: inset 0 1px 0 #fff1; }
     #${ROOT_ID} .cc-scene-title { font-size:14px; color:#f2d4a3; margin-bottom:6px; }
     #${ROOT_ID} .cc-scene-row { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px; }
     #${ROOT_ID} .cc-worker { font-size:18px; line-height:1; filter:drop-shadow(0 2px 2px #0009); animation: cc-worker-bob 2.8s ease-in-out infinite; }
@@ -196,7 +216,11 @@
     #${ROOT_ID} .cc-card.can-buy { background:linear-gradient(180deg,#5b8d57,#40653f); }
     #${ROOT_ID} .cc-controls { display:flex; gap:8px; padding:8px; border-top:1px solid #0009; background:#2a2014; }
     #${ROOT_ID} .cc-controls button { flex:1; cursor:pointer; padding:7px; background:#3f3f3f; color:#fff; border:1px solid #111; }
-    #${ROOT_ID} .cc-golden { position:fixed; font-size:52px; cursor:pointer; z-index:2147483647; filter:drop-shadow(0 0 8px gold); user-select:none; animation: cc-golden-spin 1.6s ease-in-out infinite alternate; }
+    #${ROOT_ID} .cc-golden { position:fixed; width:84px; height:84px; border-radius:50%; cursor:pointer; z-index:2147483647; user-select:none;
+      background: radial-gradient(circle at 30% 28%, #fff7c6 0 18%, #f5cf57 38%, #d89b1d 72%, #9f6806 100%);
+      border: 3px solid #ffef9c; box-shadow: 0 0 14px #ffd45b, inset 0 2px 6px #fff8;
+      display:flex; align-items:center; justify-content:center; font-size:34px; animation: cc-golden-spin 1.6s ease-in-out infinite alternate; }
+    #${ROOT_ID} .cc-golden::after { content:'Golden'; position:absolute; bottom:-18px; left:50%; transform:translateX(-50%); font-size:11px; color:#ffe7a8; text-shadow:0 1px 2px #000; }
     #${ROOT_ID} .cc-flash { position:fixed; left:50%; top:15%; transform:translateX(-50%); color:#ffea96; font-size:36px; z-index:2147483647; text-shadow:0 2px 10px #000; pointer-events:none; }
     #${ROOT_ID} .cc-click-float { position:fixed; z-index:2147483647; pointer-events:none; color:#ffd88a; font-weight:bold; text-shadow:0 2px 6px #000; animation: cc-rise 900ms ease-out forwards; }
     #${ROOT_ID} .cc-cookie-pop { position:fixed; z-index:2147483647; pointer-events:none; font-size:16px; filter:drop-shadow(0 2px 3px #0007); animation: cc-cookie-pop 700ms cubic-bezier(.17,.67,.32,1) forwards; }
@@ -206,6 +230,8 @@
     @keyframes cc-cookie-bob { 0%,100% { transform:translateY(0) rotate(-1deg);} 50% { transform:translateY(-4px) rotate(1deg);} }
     @keyframes cc-worker-bob { 0%,100% { transform:translateY(0);} 50% { transform:translateY(-1px);} }
     @keyframes cc-golden-spin { 0% { transform:rotate(-8deg) scale(1);} 100% { transform:rotate(8deg) scale(1.08);} }
+    #${ROOT_ID} .cc-wrath { background: radial-gradient(circle at 30% 28%, #ffd0d0 0 18%, #f06b6b 38%, #b93737 72%, #6f1111 100%); border-color:#ffd0d0; box-shadow:0 0 14px #ff6f6f, inset 0 2px 6px #fff5; }
+    #${ROOT_ID} .cc-wrath::after { content:'Wrath'; color:#ffc6c6; }
     @keyframes cc-cookie-pop {
       from { opacity:1; transform:translate(0,0) scale(1); }
       to { opacity:0; transform:translate(var(--dx), var(--dy)) scale(0.55) rotate(var(--rot)); }
@@ -220,7 +246,9 @@
     <div class="cc-bg"></div>
     <div class="cc-top">
       <section class="cc-col cc-left">
+        <div class="cc-grandma-badge">👵🍪</div>
         <div class="cc-title">Cookie Clicker</div>
+        <div class="cc-lace"></div>
         <div id="cc-news" class="cc-news">A quiet bakery awaits...</div>
         <div id="cc-cookie-count" class="cc-cookie-count">0 cookies</div>
         <div id="cc-cps" class="cc-cps">per second: 0</div>
@@ -363,13 +391,14 @@
       `Prestige chips: <b>${fmt(state.prestigeChips)}</b> (+${(prestigeMult() * 100 - 100).toFixed(0)}% CpS)<br>` +
       `Ascend reward now: <b>${fmt(gain)}</b> chip(s) (Potential: ${fmt(prestigePotential())})<br>` +
       `Need <b>${fmt(need)}</b> more total cookies for next prestige chip.<br>` +
-      `Clicks: <b>${fmt(state.totalClicks)}</b> | Golden clicks: <b>${fmt(state.goldenClicks)}</b> | Achievements: <b>${state.achievements.length}/${achievementDefs.length}</b><br>` +
+      `Clicks: <b>${fmt(state.totalClicks)}</b> | Golden clicks: <b>${fmt(state.goldenClicks)}</b> / spawns: <b>${fmt(state.goldenSpawns)}</b> | Achievements: <b>${state.achievements.length}/${achievementDefs.length}</b><br>` +
       `Hand-made: <b>${fmt(state.handMadeCookies)}</b> | Highest bank: <b>${fmt(state.highestCookies)}</b>`
     );
 
     const buffs = [];
     if (state.frenzyTimer > 0) buffs.push(`Frenzy ${Math.ceil(state.frenzyTimer)}s`);
     if (state.clickFrenzyTimer > 0) buffs.push(`Click Frenzy ${Math.ceil(state.clickFrenzyTimer)}s`);
+    if (state.elderFrenzyTimer > 0) buffs.push(`Elder Frenzy ${Math.ceil(state.elderFrenzyTimer)}s`);
     if (state.clotTimer > 0) buffs.push(`Clot ${Math.ceil(state.clotTimer)}s`);
     if (state.cookieStormTimer > 0) buffs.push(`Cookie Storm ${Math.ceil(state.cookieStormTimer)}s`);
     if (state.buildingSpecialTimer > 0) buffs.push(`Building Special ${Math.ceil(state.buildingSpecialTimer)}s`);
@@ -553,6 +582,7 @@
       state.multiplier = 1;
       state.frenzyTimer = 0;
       state.clickFrenzyTimer = 0;
+      state.elderFrenzyTimer = 0;
       state.clotTimer = 0;
       state.totalClicks = 0;
       state.goldenClicks = 0;
@@ -629,21 +659,40 @@
     if (!document.body.contains(root)) return;
     const gc = document.createElement('div');
     gc.className = 'cc-golden';
-    gc.textContent = '✨🍪✨';
+    const wrath = Math.random() < 0.16;
+    if (wrath) gc.classList.add('cc-wrath');
+    gc.textContent = wrath ? '😈' : '🍪';
     gc.style.left = `${10 + Math.random() * 80}%`;
     gc.style.top = `${10 + Math.random() * 80}%`;
     document.body.appendChild(gc);
 
     gc.onclick = () => {
+      state.goldenSpawns += 1;
       state.goldenClicks += 1;
       const r = Math.random();
-      if (r < 0.25) {
+      if (wrath && r < 0.28) {
+        const loss = Math.floor(state.cookies * 0.15);
+        state.cookies = Math.max(0, state.cookies - loss);
+        state.clotTimer = 90;
+        addLog(`Wrath cookie! Cursed: lost ${fmt(loss)} cookies.`);
+        flash('Cursed!');
+      } else if (wrath && r < 0.40) {
+        state.elderFrenzyTimer = 6;
+        addLog('Wrath cookie! Elder Frenzy started (x666 production).');
+        flash('Elder Frenzy!');
+      } else if (r < 0.22) {
         const gain = Math.min(state.cookies * 0.15 + 13, baseCps() * 900 + 13);
         state.cookies += gain;
         state.totalCookiesBaked += gain;
         addLog(`Golden cookie! Lucky gave ${fmt(gain)} cookies.`);
         flash(`Lucky! +${fmt(gain)}`);
-      } else if (r < 0.50) {
+      } else if (r < 0.38) {
+        const chain = Math.max(7, Math.floor((Math.log10(Math.max(1, state.cookies)) + 1) * 111));
+        state.cookies += chain;
+        state.totalCookiesBaked += chain;
+        addLog(`Golden cookie! Cookie Chain gave ${fmt(chain)} cookies.`);
+        flash(`Chain +${fmt(chain)}`);
+      } else if (r < 0.54) {
         state.frenzyTimer = 77;
         addLog('Golden cookie! Frenzy started (x7 production).');
         flash('Frenzy x7!');
@@ -752,6 +801,7 @@
     state.totalCookiesBaked += gain + stormBonus;
     if (state.frenzyTimer > 0) state.frenzyTimer = Math.max(0, state.frenzyTimer - 0.1);
     if (state.clickFrenzyTimer > 0) state.clickFrenzyTimer = Math.max(0, state.clickFrenzyTimer - 0.1);
+    if (state.elderFrenzyTimer > 0) state.elderFrenzyTimer = Math.max(0, state.elderFrenzyTimer - 0.1);
     if (state.clotTimer > 0) state.clotTimer = Math.max(0, state.clotTimer - 0.1);
     if (state.cookieStormTimer > 0) state.cookieStormTimer = Math.max(0, state.cookieStormTimer - 0.1);
     if (state.buildingSpecialTimer > 0) state.buildingSpecialTimer = Math.max(0, state.buildingSpecialTimer - 0.1);
