@@ -153,18 +153,18 @@
   style.textContent = `
     #${ROOT_ID} { position:fixed; inset:0; z-index:2147483646; font-family: Georgia, serif; color:#f5e6c8; }
     #${ROOT_ID} * { box-sizing:border-box; }
-    #${ROOT_ID} .cc-bg { position:absolute; inset:0; background:linear-gradient(90deg,#3a2716 0%,#1f2029 42%,#2a2417 100%); }
+    #${ROOT_ID} .cc-bg { position:absolute; inset:-6%; background:radial-gradient(120% 120% at 20% 10%, #674227 0%, #2d2419 42%, #1f2029 70%, #2a2417 100%); animation: cc-pan 18s ease-in-out infinite alternate; }
     #${ROOT_ID} .cc-top { position:relative; z-index:1; height:100%; display:grid; grid-template-columns: 34% 31% 35%; }
     #${ROOT_ID} .cc-col { border-right:1px solid #0007; min-height:0; }
     #${ROOT_ID} .cc-left { padding:22px 16px; display:flex; flex-direction:column; align-items:center; }
     #${ROOT_ID} .cc-title { font-size:38px; font-weight:700; margin-bottom:10px; text-shadow:0 2px 8px #000; }
-    #${ROOT_ID} .cc-news { width:100%; margin-bottom:10px; padding:6px; border:1px solid #0008; background:#251b10; color:#f3d39b; font-size:13px; text-align:center; }
+    #${ROOT_ID} .cc-news { width:100%; margin-bottom:10px; padding:6px; border:1px solid #0008; background:linear-gradient(180deg,#3a2a18,#22170f); color:#f3d39b; font-size:13px; text-align:center; border-radius:8px; box-shadow: inset 0 1px 0 #fff2, 0 4px 10px #0005; animation: cc-news-glow 3s ease-in-out infinite; }
     #${ROOT_ID} .cc-cookie-count { font-size:44px; color:#ffd37e; text-align:center; }
     #${ROOT_ID} .cc-cps { font-size:20px; color:#e9d5ae; margin-bottom:8px; }
     #${ROOT_ID} .cc-cookie { width:260px; height:260px; border-radius:50%; border:8px solid #4f2708; cursor:pointer;
-      background:radial-gradient(circle at 33% 30%, #e3a968 0 33%, #b86f2e 67%, #8f4f1d 100%);
-      box-shadow: inset -12px -18px 22px #0006, 0 6px 18px #000a; font-size:120px; }
-    #${ROOT_ID} .cc-cookie:active { transform:scale(0.96); }
+      background:radial-gradient(circle at 32% 28%, #f4c283 0 23%, #d08a44 37%, #b86f2e 67%, #8f4f1d 100%);
+      box-shadow: inset -12px -18px 22px #0006, inset 8px 8px 12px #fff3, 0 12px 24px #000a; font-size:120px; transform-style:preserve-3d; animation: cc-cookie-bob 2.2s ease-in-out infinite; }
+    #${ROOT_ID} .cc-cookie:active { transform:translateY(3px) scale(0.96); }
     #${ROOT_ID} .cc-buffs { min-height:24px; color:#a9ff9f; font-size:16px; margin-top:12px; text-align:center; }
     #${ROOT_ID} .cc-mid { padding:12px; background:#1118; display:flex; flex-direction:column; gap:10px; }
     #${ROOT_ID} .cc-panel-title { font-size:22px; margin-bottom:2px; color:#ffe2b3; }
@@ -172,7 +172,9 @@
     #${ROOT_ID} .cc-scene { border:1px solid #0008; background:#1a1310; padding:8px; min-height:120px; }
     #${ROOT_ID} .cc-scene-title { font-size:14px; color:#f2d4a3; margin-bottom:6px; }
     #${ROOT_ID} .cc-scene-row { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px; }
-    #${ROOT_ID} .cc-worker { font-size:18px; line-height:1; }
+    #${ROOT_ID} .cc-worker { font-size:18px; line-height:1; filter:drop-shadow(0 2px 2px #0009); animation: cc-worker-bob 2.8s ease-in-out infinite; }
+    #${ROOT_ID} .cc-img3d { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%;
+      background:radial-gradient(circle at 35% 30%, #fff9, #ffffff22 45%, #00000033 100%); box-shadow: inset 0 1px 0 #fff7, 0 2px 4px #0007; }
     #${ROOT_ID} .cc-log { flex:1; border:1px solid #0008; background:#0005; overflow:auto; padding:8px; font-size:13px; line-height:1.35; }
     #${ROOT_ID} .cc-log-entry { padding:4px 0; border-bottom:1px solid #ffffff1f; }
     #${ROOT_ID} .cc-right { display:flex; flex-direction:column; background:#151619d4; }
@@ -186,15 +188,21 @@
     #${ROOT_ID} .cc-switch { flex:1; border:1px solid #0008; background:#363636; color:#fff; cursor:pointer; padding:5px; }
     #${ROOT_ID} .cc-switch.active { background:#7d5a3a; }
     #${ROOT_ID} .cc-list { flex:1; overflow:auto; padding:10px; }
-    #${ROOT_ID} .cc-card { width:100%; text-align:left; margin-bottom:7px; padding:9px; border:1px solid #0008; color:#fff; cursor:pointer; background:#383838; }
-    #${ROOT_ID} .cc-card.can-buy { background:#446543; }
+    #${ROOT_ID} .cc-card { width:100%; text-align:left; margin-bottom:7px; padding:9px; border:1px solid #0008; color:#fff; cursor:pointer; background:linear-gradient(180deg,#4a4a4a,#2f2f2f); border-radius:10px; box-shadow: inset 0 1px 0 #fff2, 0 4px 10px #0005; transition: transform .12s ease, box-shadow .12s ease; }
+    #${ROOT_ID} .cc-card:hover { transform:translateY(-1px); box-shadow: inset 0 1px 0 #fff3, 0 8px 14px #0007; }
+    #${ROOT_ID} .cc-card.can-buy { background:linear-gradient(180deg,#5b8d57,#40653f); }
     #${ROOT_ID} .cc-controls { display:flex; gap:8px; padding:8px; border-top:1px solid #0009; background:#2a2014; }
     #${ROOT_ID} .cc-controls button { flex:1; cursor:pointer; padding:7px; background:#3f3f3f; color:#fff; border:1px solid #111; }
-    #${ROOT_ID} .cc-golden { position:fixed; font-size:52px; cursor:pointer; z-index:2147483647; filter:drop-shadow(0 0 8px gold); user-select:none; }
+    #${ROOT_ID} .cc-golden { position:fixed; font-size:52px; cursor:pointer; z-index:2147483647; filter:drop-shadow(0 0 8px gold); user-select:none; animation: cc-golden-spin 1.6s ease-in-out infinite alternate; }
     #${ROOT_ID} .cc-flash { position:fixed; left:50%; top:15%; transform:translateX(-50%); color:#ffea96; font-size:36px; z-index:2147483647; text-shadow:0 2px 10px #000; pointer-events:none; }
     #${ROOT_ID} .cc-click-float { position:fixed; z-index:2147483647; pointer-events:none; color:#ffd88a; font-weight:bold; text-shadow:0 2px 6px #000; animation: cc-rise 900ms ease-out forwards; }
     #${ROOT_ID} .cc-cookie-pop { position:fixed; z-index:2147483647; pointer-events:none; font-size:16px; filter:drop-shadow(0 2px 3px #0007); animation: cc-cookie-pop 700ms cubic-bezier(.17,.67,.32,1) forwards; }
-    @keyframes cc-rise { from { opacity:1; transform:translate(-50%, 0); } to { opacity:0; transform:translate(-50%, -48px); } }
+    @keyframes cc-rise { from { opacity:1; transform:translate(-50%, 0) scale(1); } to { opacity:0; transform:translate(-50%, -48px) scale(1.08); } }
+    @keyframes cc-pan { from { transform:translateX(-2%) translateY(-1%);} to { transform:translateX(2%) translateY(1%);} }
+    @keyframes cc-news-glow { 0%,100% { box-shadow: inset 0 1px 0 #fff2, 0 4px 10px #0005; } 50% { box-shadow: inset 0 1px 0 #fff4, 0 6px 14px #0008; } }
+    @keyframes cc-cookie-bob { 0%,100% { transform:translateY(0) rotate(-1deg);} 50% { transform:translateY(-4px) rotate(1deg);} }
+    @keyframes cc-worker-bob { 0%,100% { transform:translateY(0);} 50% { transform:translateY(-1px);} }
+    @keyframes cc-golden-spin { 0% { transform:rotate(-8deg) scale(1);} 100% { transform:rotate(8deg) scale(1.08);} }
     @keyframes cc-cookie-pop {
       from { opacity:1; transform:translate(0,0) scale(1); }
       to { opacity:0; transform:translate(var(--dx), var(--dy)) scale(0.55) rotate(var(--rot)); }
@@ -421,7 +429,7 @@
       const affordable = state.buyMode === 'buy' ? state.cookies >= price : maxSell > 0;
       const btn = document.createElement('button');
       btn.className = `cc-card ${affordable ? 'can-buy' : ''}`;
-      btn.innerHTML = policy.createHTML(`<b>${b.name}</b> (${b.owned})<br>${state.buyMode === 'buy' ? `Buy ${amount} — Cost: ${fmt(price)} | +${(b.cps * amount).toLocaleString()}/s` : `Sell ${maxSell} — Gain: ${fmt(price)} | -${(b.cps * maxSell).toLocaleString()}/s`}`);
+      btn.innerHTML = policy.createHTML(`<b><span class="cc-img3d">${buildingIcon(b.name)}</span> ${b.name}</b> (${b.owned})<br>${state.buyMode === 'buy' ? `Buy ${amount} — Cost: ${fmt(price)} | +${(b.cps * amount).toLocaleString()}/s` : `Sell ${maxSell} — Gain: ${fmt(price)} | -${(b.cps * maxSell).toLocaleString()}/s`}`);
       btn.onclick = () => {
         if (state.buyMode === 'buy') {
           if (state.cookies < price) return;
@@ -456,6 +464,14 @@
     return { label: 'Production', icon: '⚙️' };
   }
 
+  function buildingIcon(name) {
+    const map = {
+      Cursor: '🖱️', Grandma: '👵', Farm: '🌾', Mine: '⛏️', Factory: '🏭', Bank: '🏦', Temple: '⛩️',
+      'Wizard Tower': '🧙', Shipment: '🚀', 'Alchemy Lab': '⚗️', Portal: '🌀', 'Time Machine': '⏳', 'Antimatter Condenser': '⚛️'
+    };
+    return map[name] || '🍪';
+  }
+
   function renderProductionScene() {
     const grandma = state.buildings.find((b) => b.name === 'Grandma')?.owned || 0;
     const factory = state.buildings.find((b) => b.name === 'Factory')?.owned || 0;
@@ -464,7 +480,7 @@
 
     const row = (title, icon, count, maxDraw = 18) => {
       const shown = Math.min(count, maxDraw);
-      const workers = Array.from({ length: shown }, () => `<span class="cc-worker">${icon}</span>`).join('');
+      const workers = Array.from({ length: shown }, () => `<span class="cc-worker cc-img3d">${icon}</span>`).join('');
       const extra = count > maxDraw ? ` <span style="font-size:12px;color:#d9be96">+${count - maxDraw} more</span>` : '';
       return `<div class="cc-scene-title">${title}: <b>${count}</b>${extra}</div><div class="cc-scene-row">${workers || '<span style="font-size:12px;color:#9f8d73">none yet</span>'}</div>`;
     };
@@ -490,7 +506,7 @@
         if (u.clickMult) effects.push(`x${u.clickMult} click power`);
         if (u.milkMult) effects.push(`x${u.milkMult} milk bonus`);
         const cat = upgradeCategory(u);
-        btn.innerHTML = policy.createHTML(`<b>${cat.icon} ${u.name}</b> <span style="color:#c6d6ff">[${cat.label}]</span><br>Cost: ${fmt(u.cost)} | ${effects.join(' + ')}<br><small style="color:#d9c39f">${reqText(u.req)}</small>`);
+        btn.innerHTML = policy.createHTML(`<b><span class="cc-img3d">${cat.icon}</span> ${u.name}</b> <span style="color:#c6d6ff">[${cat.label}]</span><br>Cost: ${fmt(u.cost)} | ${effects.join(' + ')}<br><small style="color:#d9c39f">${reqText(u.req)}</small>`);
         btn.onclick = () => {
           if (state.cookies < u.cost) return;
           state.cookies -= u.cost;

@@ -20,3 +20,5 @@ Use only `game.js`.
 - Upgrade area now grouped with OG-style category tags/icons and unlock requirement text
 - News ticker flavor text and expanded golden-cookie outcomes (Lucky, Frenzy, Click Frenzy, Building Special, Cookie Storm, Ruin+Clot)
 - Prestige + keybind hide/show + autosave (`cc_pro_console_save_v5`)
+
+- 3D-style visual polish pass: beveled buttons/cards/icons, depth shading, animated cookie bob, animated background drift, and livelier golden-cookie motion
