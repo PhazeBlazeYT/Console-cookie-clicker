@@ -161,9 +161,15 @@
     #${ROOT_ID} .cc-news { width:100%; margin-bottom:10px; padding:6px; border:1px solid #0008; background:linear-gradient(180deg,#3a2a18,#22170f); color:#f3d39b; font-size:13px; text-align:center; border-radius:8px; box-shadow: inset 0 1px 0 #fff2, 0 4px 10px #0005; animation: cc-news-glow 3s ease-in-out infinite; }
     #${ROOT_ID} .cc-cookie-count { font-size:44px; color:#ffd37e; text-align:center; }
     #${ROOT_ID} .cc-cps { font-size:20px; color:#e9d5ae; margin-bottom:8px; }
-    #${ROOT_ID} .cc-cookie { width:260px; height:260px; border-radius:50%; border:8px solid #4f2708; cursor:pointer;
-      background:radial-gradient(circle at 32% 28%, #f4c283 0 23%, #d08a44 37%, #b86f2e 67%, #8f4f1d 100%);
-      box-shadow: inset -12px -18px 22px #0006, inset 8px 8px 12px #fff3, 0 12px 24px #000a; font-size:120px; transform-style:preserve-3d; animation: cc-cookie-bob 2.2s ease-in-out infinite; }
+    #${ROOT_ID} .cc-cookie { width:260px; height:260px; border-radius:50%; border:none; cursor:pointer;
+      background:
+        radial-gradient(circle at 38% 36%, #6a3a20 0 4px, transparent 5px),
+        radial-gradient(circle at 60% 31%, #5f331b 0 5px, transparent 6px),
+        radial-gradient(circle at 66% 57%, #6a3a20 0 4px, transparent 5px),
+        radial-gradient(circle at 34% 60%, #5f331b 0 5px, transparent 6px),
+        radial-gradient(circle at 48% 49%, #6a3a20 0 4px, transparent 5px),
+        radial-gradient(circle at 32% 28%, #f4c283 0 28%, #d08a44 42%, #b86f2e 72%, #8f4f1d 100%);
+      box-shadow: inset -14px -18px 24px #0005, inset 10px 10px 14px #fff2, 0 12px 24px #000a; font-size:0; transform-style:preserve-3d; animation: cc-cookie-bob 2.2s ease-in-out infinite; }
     #${ROOT_ID} .cc-cookie:active { transform:translateY(3px) scale(0.96); }
     #${ROOT_ID} .cc-buffs { min-height:24px; color:#a9ff9f; font-size:16px; margin-top:12px; text-align:center; }
     #${ROOT_ID} .cc-mid { padding:12px; background:#1118; display:flex; flex-direction:column; gap:10px; }
@@ -221,7 +227,7 @@
         <div id="cc-news" class="cc-news">A quiet bakery awaits...</div>
         <div id="cc-cookie-count" class="cc-cookie-count">0 cookies</div>
         <div id="cc-cps" class="cc-cps">per second: 0</div>
-        <button id="cc-cookie" class="cc-cookie">🍪</button>
+        <button id="cc-cookie" class="cc-cookie" aria-label="Cookie"></button>
         <div id="cc-hotkey-note" class="cc-hotkey-note"></div>
         <div id="cc-buffs" class="cc-buffs"></div>
       </section>
